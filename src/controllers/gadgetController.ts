@@ -89,6 +89,7 @@ export const getMyGadgets = async (req: AuthRequest, res: Response) => {
     const gadgets = await Gadget.find({ createdBy: req.user?.id });
     res.json({ success: true, data: gadgets });
   } catch (error: any) {
+    console.error('Get All Gadgets Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
