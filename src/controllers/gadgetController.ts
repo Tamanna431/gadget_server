@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { Gadget } from '../models/Gadget';
 import { AuthRequest } from '../middlewares/auth';
 
-// Get all gadgets (with filter, sort, pagination)
+// Get all gadgets (with filter, sort, pagination)//h
 export const getAllGadgets = async (req: Request, res: Response) => {
   try {
     const { search, category, minPrice, maxPrice, sort, page = '1', limit = '8' } = req.query;
