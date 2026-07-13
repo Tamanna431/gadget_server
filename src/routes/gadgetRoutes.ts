@@ -7,14 +7,16 @@ import {
   getMyGadgets,
 } from '../controllers/gadgetController';
 import { protect } from '../middlewares/auth';
-import { Request, Response, NextFunction } from 'express';
 
 const router = express.Router();
 
-router.get('/', getAllGadgets);
-router.get('/my', protect as unknown as (req: Request, res: Response, next: NextFunction) => void, getMyGadgets);
-router.get('/:id', getGadgetById);
-router.post('/', protect as unknown as (req: Request, res: Response, next: NextFunction) => void, createGadget);
-router.delete('/:id', protect as unknown as (req: Request, res: Response, next: NextFunction) => void, deleteGadget);
+// ✅ Public routes (protect ছাড়া)
+router.get('/', getAllGadgets);           // সবাই দেখতে পারবে
+router.get('/:id', getGadgetById);        // সবাই দেখতে পারবে
+
+// ✅ Protected routes (protect middleware সহ)
+router.get('/my', protect, getMyGadgets);              // শুধু logged in users
+router.post('/', protect, createGadget);               // শুধু logged in users
+router.delete('/:id', protect, deleteGadget);          // শুধু logged in users
 
 export default router;
