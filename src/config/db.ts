@@ -21,7 +21,10 @@ async function connectDB() {
   }
 
   if (!cached.promise) {
-    const options = { bufferCommands: false };
+    const options = { 
+      bufferCommands: false,
+      dbName: "gadgetverse"
+    };
     // ✅ Non-null assertion operator (!) যোগ করুন
     cached.promise = mongoose.connect(MONGODB_URI!, options).then((mongoose) => {
       console.log("✅ MongoDB Connected");
