@@ -1,12 +1,14 @@
+import dotenv from "dotenv";
+dotenv.config(); // ✅ এই লাইনটি সব import এর আগে থাকতে হবে
+
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable");
 }
 
-// ✅ Connection cache for serverless
 let cached = (global as any).mongoose;
 
 if (!cached) {
@@ -19,9 +21,7 @@ async function connectDB() {
   }
 
   if (!cached.promise) {
-    const options = {
-      bufferCommands: false,
-    };
+    const options = { bufferCommands: false };
     cached.promise = mongoose.connect(MONGODB_URI, options).then((mongoose) => {
       console.log("✅ MongoDB Connected");
       return mongoose;
