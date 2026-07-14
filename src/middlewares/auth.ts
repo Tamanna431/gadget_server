@@ -29,9 +29,12 @@ export const protect = async (
 
     // 2. Get token from cookies if not in headers
     if (!token && req.headers.cookie) {
-      const cookieMatch = req.headers.cookie.match(/better-auth\.session_token=([^;]+)/);
+      // BetterAuth uses __Secure- prefix on HTTPS (production)
+      const secureCookieMatch = req.headers.cookie.match(/__Secure-better-auth\.session_token=([^;]+)/);
+      const normalCookieMatch = req.headers.cookie.match(/better-auth\.session_token=([^;]+)/);
+      const cookieMatch = secureCookieMatch || normalCookieMatch;
       if (cookieMatch) {
-        token = cookieMatch[1];
+        token = decodeURIComponent(cookieMatch[1]);
       }
     }
 
