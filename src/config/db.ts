@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); // ✅ এই লাইনটি সব import এর আগে থাকতে হবে
+dotenv.config();
 
 import mongoose from "mongoose";
 
@@ -22,7 +22,8 @@ async function connectDB() {
 
   if (!cached.promise) {
     const options = { bufferCommands: false };
-    cached.promise = mongoose.connect(MONGODB_URI, options).then((mongoose) => {
+    // ✅ Non-null assertion operator (!) যোগ করুন
+    cached.promise = mongoose.connect(MONGODB_URI!, options).then((mongoose) => {
       console.log("✅ MongoDB Connected");
       return mongoose;
     });
