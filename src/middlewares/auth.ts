@@ -85,7 +85,12 @@ export const protect = async (
       }
 
       // Query session collection directly
-      const session = await db.collection("session").findOne({ token });
+      // BetterAuth cookie format: {token}.{hmac_signature}
+      // The database stores only the token part (before the '.')
+      const sessionToken = token.includes('.') ? token.split('.')[0] : token;
+      const session = await db.collection("session").findOne({ 
+        $or: [{ token: sessionToken }, { token }] 
+      });
       if (!session) {
         console.log("❌ No session found in database for token");
         return res.status(401).json({
