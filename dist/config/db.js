@@ -4,15 +4,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
-const connectDB = async () => {
-    try {
-        const conn = await mongoose_1.default.connect(process.env.MONGODB_URI);
-        console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+    throw new Error("Please define the MONGODB_URI environment variable");
+}
+// ✅ Connection cache for serverless
+let cached = global.mongoose;
+if (!cached) {
+    cached = global.mongoose = { conn: null, promise: null };
+}
+async function connectDB() {
+    if (cached.conn) {
+        return cached.conn;
     }
-    catch (error) {
-        console.error('MongoDB Connection Error:', error);
-        process.exit(1);
+    if (!cached.promise) {
+        const options = {
+            bufferCommands: false,
+        };
+        cached.promise = mongoose_1.default.connect(MONGODB_URI, options).then((mongoose) => {
+            console.log("✅ MongoDB Connected");
+            return mongoose;
+        });
     }
-};
+    cached.conn = await cached.promise;
+    return cached.conn;
+}
 exports.default = connectDB;
 //# sourceMappingURL=db.js.map

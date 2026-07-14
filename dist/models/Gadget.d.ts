@@ -11,11 +11,9 @@ export interface IGadget extends Document {
     stock: number;
     createdBy: mongoose.Types.ObjectId;
 }
-export declare const Gadget: mongoose.Model<IGadget, {}, {}, {}, Document<unknown, {}, IGadget, {}, mongoose.DefaultSchemaOptions> & IGadget & Required<{
+export declare const Gadget: mongoose.Model<IGadget, {}, {}, {}, mongoose.Document<unknown, {}, IGadget, {}, {}> & IGadget & Required<{
     _id: mongoose.Types.ObjectId;
 }> & {
     __v: number;
-} & {
-    id: string;
-}, any, IGadget>;
+}, any>;
 //# sourceMappingURL=Gadget.d.ts.map

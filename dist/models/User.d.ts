@@ -6,11 +6,9 @@ export interface IUser extends Document {
     role: 'user' | 'admin';
     createdAt: Date;
 }
-export declare const User: mongoose.Model<IUser, {}, {}, {}, Document<unknown, {}, IUser, {}, mongoose.DefaultSchemaOptions> & IUser & Required<{
+export declare const User: mongoose.Model<IUser, {}, {}, {}, mongoose.Document<unknown, {}, IUser, {}, {}> & IUser & Required<{
     _id: mongoose.Types.ObjectId;
 }> & {
     __v: number;
-} & {
-    id: string;
-}, any, IUser>;
+}, any>;
 //# sourceMappingURL=User.d.ts.map
