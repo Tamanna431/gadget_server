@@ -11,11 +11,48 @@ const app = express();
 
 // ✅ CORS configuration
 app.use(cors({
-  origin: ["http://localhost:3000", process.env.BETTER_AUTH_URL || ""].filter(Boolean),
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = [
+      "http://localhost:3000",
+      process.env.FRONTEND_URL || "",
+      process.env.BETTER_AUTH_URL || "",
+    ].filter(Boolean);
+
+    // Allow exact match
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Allow any Vercel preview/production URL from the user's project
+    if (origin.endsWith(".vercel.app")) {
+      return callback(null, true);
+    }
+
+    console.log("❌ CORS blocked origin:", origin);
+    callback(null, false);
+  },
+  credentials: true,
 }));
 
 app.use(express.json());
+
+// ✅ Database connection middleware for Serverless/Vercel cold starts
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err: any) {
+    console.error("❌ Database connection error inside middleware:", err);
+    res.status(500).json({
+      success: false,
+      message: "Database connection failed",
+      error: err.message,
+    });
+  }
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/gadgets", gadgetRoutes);
