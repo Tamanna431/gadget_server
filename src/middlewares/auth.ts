@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { auth } from "../lib/auth";
+import jwt from "jsonwebtoken";
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
-    role: string;  // ✅ required করুন (optional নয়)
+    role: string;
     name?: string;
   };
 }
@@ -16,36 +16,47 @@ export const protect = async (
   next: NextFunction
 ) => {
   try {
-    console.log("🔍 Checking session...");
+    console.log("🔍 Checking token...");
 
-    const session = await auth.api.getSession({
-      headers: req.headers as any,
-    });
-
-    console.log("Session:", session ? "Found" : "Not Found");
-
-    if (!session || !session.user) {
-      console.log("❌ No valid session");
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log("❌ No token found");
       return res.status(401).json({
         success: false,
-        message: "No session, please login",
+        message: "No token, please login",
       });
     }
 
-    req.user = {
-      id: session.user.id,
-      email: session.user.email,
-      name: session.user.name,
-      role: (session.user as any).role || "user",  // ✅ fallback দিন
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "") as {
+      id: string;
+      role: string;
     };
 
-    console.log("✅ User authenticated:", req.user.email);
+    // For demo user
+    if (decoded.id === "demo_user_id") {
+      req.user = {
+        id: decoded.id,
+        email: "demo@gadgetverse.com",
+        name: "Demo User",
+        role: decoded.role || "user",
+      };
+    } else {
+      req.user = {
+        id: decoded.id,
+        email: "",
+        role: decoded.role || "user",
+      };
+    }
+
+    console.log("✅ User authenticated:", req.user.id);
     next();
   } catch (error) {
     console.error("❌ Auth Error:", error);
     res.status(401).json({
       success: false,
-      message: "Invalid session",
+      message: "Invalid token",
     });
   }
 };
