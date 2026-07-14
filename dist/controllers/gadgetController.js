@@ -2,14 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getMyGadgets = exports.deleteGadget = exports.createGadget = exports.getGadgetById = exports.getAllGadgets = void 0;
 const Gadget_1 = require("../models/Gadget");
-// Get all gadgets (with filter, sort, pagination)
 const getAllGadgets = async (req, res) => {
     try {
-        const { search, category, minPrice, maxPrice, sort, page = '1', limit = '8' } = req.query;
+        const { search, category, minPrice, maxPrice, sort, page = "1", limit = "8" } = req.query;
         const query = {};
         if (search)
-            query.title = { $regex: search, $options: 'i' };
-        if (category && category !== 'all')
+            query.title = { $regex: search, $options: "i" };
+        if (category && category !== "all")
             query.category = category;
         if (minPrice || maxPrice) {
             query.price = {};
@@ -19,11 +18,11 @@ const getAllGadgets = async (req, res) => {
                 query.price.$lte = Number(maxPrice);
         }
         let sortOption = { createdAt: -1 };
-        if (sort === 'price-asc')
+        if (sort === "price-asc")
             sortOption = { price: 1 };
-        if (sort === 'price-desc')
+        if (sort === "price-desc")
             sortOption = { price: -1 };
-        if (sort === 'rating')
+        if (sort === "rating")
             sortOption = { rating: -1 };
         const pageNum = Number(page);
         const limitNum = Number(limit);
@@ -43,59 +42,79 @@ const getAllGadgets = async (req, res) => {
         });
     }
     catch (error) {
+        console.error("❌ Get All Gadgets Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 exports.getAllGadgets = getAllGadgets;
-// Get single gadget
 const getGadgetById = async (req, res) => {
     try {
         const gadget = await Gadget_1.Gadget.findById(req.params.id);
-        if (!gadget)
-            return res.status(404).json({ success: false, message: 'Not found' });
+        if (!gadget) {
+            return res.status(404).json({ success: false, message: "Gadget not found" });
+        }
         res.json({ success: true, data: gadget });
     }
     catch (error) {
+        console.error("❌ Get Gadget By ID Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 exports.getGadgetById = getGadgetById;
-// Create gadget (protected)
 const createGadget = async (req, res) => {
     try {
-        const gadget = await Gadget_1.Gadget.create({ ...req.body, createdBy: req.user?.id });
+        if (!req.user) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+        const gadget = new Gadget_1.Gadget({
+            ...req.body,
+            createdBy: req.user.id,
+        });
+        await gadget.save();
         res.status(201).json({ success: true, data: gadget });
     }
     catch (error) {
+        console.error("❌ Create Gadget Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 exports.createGadget = createGadget;
-// Delete gadget (protected)
 const deleteGadget = async (req, res) => {
     try {
-        const gadget = await Gadget_1.Gadget.findById(req.params.id);
-        if (!gadget)
-            return res.status(404).json({ success: false, message: 'Not found' });
-        // Admin চেক - req.user?.role এখন কাজ করবে
-        if (gadget.createdBy.toString() !== req.user?.id && req.user?.role !== 'admin') {
-            return res.status(403).json({ success: false, message: 'Not authorized' });
+        if (!req.user) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
         }
-        await gadget.deleteOne();
-        res.json({ success: true, message: 'Deleted successfully' });
+        const gadget = await Gadget_1.Gadget.findByIdAndDelete(req.params.id);
+        if (!gadget) {
+            return res.status(404).json({ success: false, message: "Gadget not found" });
+        }
+        res.json({ success: true, message: "Gadget deleted successfully" });
     }
     catch (error) {
+        console.error("❌ Delete Gadget Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 exports.deleteGadget = deleteGadget;
-// Get my gadgets (protected)
 const getMyGadgets = async (req, res) => {
     try {
-        const gadgets = await Gadget_1.Gadget.find({ createdBy: req.user?.id });
-        res.json({ success: true, data: gadgets });
+        console.log("🚀 [DEBUG] getMyGadgets called");
+        console.log("🚀 [DEBUG] req.user:", req.user);
+        if (!req.user || !req.user.id) {
+            console.log("❌ [DEBUG] No user ID found");
+            return res.status(401).json({ success: false, message: "User not authenticated" });
+        }
+        console.log("🚀 [DEBUG] Querying for createdBy:", req.user.id);
+        const gadgets = await Gadget_1.Gadget.find({ createdBy: req.user.id });
+        console.log("✅ [DEBUG] Found gadgets:", gadgets.length);
+        res.json({
+            success: true,
+            data: gadgets,
+            count: gadgets.length,
+        });
     }
     catch (error) {
+        console.error("💥 [DEBUG] CATCH BLOCK ERROR:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

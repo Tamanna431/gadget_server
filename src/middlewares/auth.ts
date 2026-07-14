@@ -1,26 +1,51 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from "express";
+import { auth } from "../lib/auth";
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
-    role: string;
-    email?: string;
+    email: string;
+    role: string;  // ✅ required করুন (optional নয়)
     name?: string;
   };
 }
 
-export const protect = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const protect = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      res.status(401).json({ success: false, message: 'No token, authorization denied' });
-      return;
+    console.log("🔍 Checking session...");
+
+    const session = await auth.api.getSession({
+      headers: req.headers as any,
+    });
+
+    console.log("Session:", session ? "Found" : "Not Found");
+
+    if (!session || !session.user) {
+      console.log("❌ No valid session");
+      return res.status(401).json({
+        success: false,
+        message: "No session, please login",
+      });
     }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { id: string; role: string };
-    req.user = decoded;
+
+    req.user = {
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.name,
+      role: (session.user as any).role || "user",  // ✅ fallback দিন
+    };
+
+    console.log("✅ User authenticated:", req.user.email);
     next();
   } catch (error) {
-    res.status(401).json({ success: false, message: 'Invalid token' });
+    console.error("❌ Auth Error:", error);
+    res.status(401).json({
+      success: false,
+      message: "Invalid session",
+    });
   }
 };

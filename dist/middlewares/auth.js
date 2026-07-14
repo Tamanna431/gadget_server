@@ -1,23 +1,36 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.protect = void 0;
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const protect = (req, res, next) => {
+const auth_1 = require("../lib/auth");
+const protect = async (req, res, next) => {
     try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
-        if (!token) {
-            res.status(401).json({ success: false, message: 'No token, authorization denied' });
-            return;
+        console.log("🔍 Checking session...");
+        const session = await auth_1.auth.api.getSession({
+            headers: req.headers,
+        });
+        console.log("Session:", session ? "Found" : "Not Found");
+        if (!session || !session.user) {
+            console.log("❌ No valid session");
+            return res.status(401).json({
+                success: false,
+                message: "No session, please login",
+            });
         }
-        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || '');
-        req.user = decoded;
+        req.user = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.name,
+            role: session.user.role || "user", // ✅ fallback দিন
+        };
+        console.log("✅ User authenticated:", req.user.email);
         next();
     }
     catch (error) {
-        res.status(401).json({ success: false, message: 'Invalid token' });
+        console.error("❌ Auth Error:", error);
+        res.status(401).json({
+            success: false,
+            message: "Invalid session",
+        });
     }
 };
 exports.protect = protect;
