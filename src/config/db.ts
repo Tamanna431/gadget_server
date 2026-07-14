@@ -26,9 +26,15 @@ async function connectDB() {
       dbName: "gadgetverse"
     };
     // ✅ Non-null assertion operator (!) যোগ করুন
-    cached.promise = mongoose.connect(MONGODB_URI!, options).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI!, options).then(async (mongooseInstance) => {
       console.log("✅ MongoDB Connected");
-      return mongoose;
+      try {
+        const { seedData } = await import("../utils/seed");
+        await seedData();
+      } catch (seedErr) {
+        console.error("❌ Auto-seeding database failed:", seedErr);
+      }
+      return mongooseInstance;
     });
   }
 
